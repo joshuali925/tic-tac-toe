@@ -1,3 +1,4 @@
+import sys
 class tic_tac_toe(object):
     def __init__(self):
         self.board = [0] * 9
@@ -16,6 +17,7 @@ class tic_tac_toe(object):
             for j in range(3):
                 print(getchar(board[i * 3 + j]), end='|')
             print()
+        print('===========')
 
     def eval(self, board=None):
         if not board: board = self.board
@@ -31,38 +33,30 @@ class tic_tac_toe(object):
     def alphabeta(self, board=None, player=None, alpha=-99999, beta=99999):
         if not board: board = self.board
         if player is None: player = self.player
-        if sum(board) == 0: return None, 0  # if empty, place on upper left corner
 
         if self.terminal(board):
             return self.eval(board), None
-        move = -1
         if player:
-            best = -99999
+            best = -99999, None
             for empty in range(9):
                 if board[empty] != 0: continue
                 board[empty] = 1
                 v, _ = self.alphabeta(board, False, alpha, beta)
                 board[empty] = 0
-                if v > best:
-                    best = v
-                    move = empty
-                if best >= beta:
-                    return best, move
-                alpha = max(alpha, best)
+                if v > best[0]: best = v, empty
+                if best[0] >= beta: return best
+                alpha = max(alpha, best[0])
         else:
-            best = 99999
+            best = 99999, None
             for empty in range(9):
                 if board[empty] != 0: continue
                 board[empty] = 2
                 v, _ = self.alphabeta(board, True, alpha, beta)
                 board[empty] = 0
-                if v < best:
-                    best = v
-                    move = empty
-                if best <= alpha:
-                    return best, move
-                beta = min(beta, best)
-        return best, move
+                if v < best[0]: best = v, empty
+                if best[0] <= alpha: return best
+                beta = min(beta, best[0])
+        return best
 
     def start(self, ai_move=False):
         board = self.board
@@ -70,20 +64,18 @@ class tic_tac_toe(object):
         while True:
             if ai_move: _, x = self.alphabeta()
             else: x = int(input('Position: ')) - 1
-            if x > 8 or x < 0 or board[x] != 0:
+            if not (0 <= x <= 8 and board[x] == 0):
                 print('Invalid')
                 continue
             board[x] = 1 if self.player else 2
             self.printboard()
-            print('===========')
-            if self.terminal():
-                if self.eval() == 0: print('Tie')
-                elif self.player: print('X wins')
-                else: print('O wins')
-                return
-            self.player = not self.player
-            ai_move = not ai_move
+            if self.terminal(): break
+            self.player, ai_move = not self.player, not ai_move
+        if self.eval() == 0: print('Tie')
+        elif self.player: print('X wins')
+        else: print('O wins')
 
 
 game = tic_tac_toe()
-game.start()
+if len(sys.argv) == 1: game.start()
+else: game.start(True)
